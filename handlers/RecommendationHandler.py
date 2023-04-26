@@ -30,7 +30,8 @@ class RecommendationHandler:
 
     async def recommend(self, update: Update, context: CallbackContext):
         msg_to_send = f"Ви обрали тип {self.text}!\n" \
-                      f"Оберіть як ви хочете отримати рекомендації"
+                      f"Оберіть як ви хочете отримати рекомендації." \
+                      f"\nЯкщо хочете відмінити дію, то використайте команду /cancel."
         await self._choose_rec_type(update, context, msg_to_send)
         return self.main_state
 
@@ -38,7 +39,8 @@ class RecommendationHandler:
         if update.message.text == self.UKR_DESC_BUTTON:
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Для типу '{self.text}' введіть ваш опис",
+                text=f"Для типу '{self.text}' введіть ваш опис. "
+                     f"\nЯкщо хочете відмінити дію, то використайте команду /cancel.",
                 reply_markup=ReplyKeyboardRemove()
             )
             return self.desc_state
@@ -46,7 +48,8 @@ class RecommendationHandler:
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
                 text=f"Для типу '{self.text}' введіть вашу категорію."
-                     "\nНаприклад: комедія; жахи; фантастика з елемементами драми",
+                     f"\nНаприклад: комедія; жахи; фантастика з елемементами драми"
+                     f"\nЯкщо хочете відмінити дію, то використайте команду /cancel.",
                 reply_markup=ReplyKeyboardRemove()
             )
             return self.cat_state
