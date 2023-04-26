@@ -20,10 +20,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 openai.api_key = OPENAI_API_KEY  # Replace with your OpenAI API key
 
 
-
 async def start(update: Update, context: CallbackContext):
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Цей бот було створено, щоб надати рекомендації для фільмів та серіалів за "
+                                   text="Цей бот було створено, щоб надати рекомендації для фільмів та серіалів за"
                                         "введеними категоріями або описом."
                                         "\n\nЗагальні команди:"
                                         "\n/start - початкова команда"
@@ -31,12 +30,14 @@ async def start(update: Update, context: CallbackContext):
                                         "\n\nКоманди для отримання рекомендацій:"
                                         "\n/series - отримати рекомендації лише для серіалів"
                                         "\n/films - отримати рекомендації лише для фільмів"
-                                        "\n/general - отримати рекомендації і для фільмів і для серіалів")
+                                        "\n/general - отримати рекомендації і для фільмів і для серіалів"
+                                        "\n/cancel - відмінити останню дію після"
+                                        "\n\n Відповіді можуть містити неточності, оскільки вони згенеровані за допомогою ChatGPT")
 
 
 async def unknown(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Вибачте, я не розумію цієї команди. Будь ласка, спробуйте щось інше.")
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text="Вибачте, я не розумію цієї команди. Будь ласка, спробуйте щось інше.")
 
 
 def main() -> None:
@@ -47,11 +48,12 @@ def main() -> None:
         .build()
     )
     # Register the command handlers
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(CommandHandler('help', start))
     RecommendationHandler('films', 'фільми', app)
     RecommendationHandler('series', 'серіали', app)
     RecommendationHandler('general', 'фільми та серіали', app)
+
+    app.add_handler(CommandHandler('start', start))
+    app.add_handler(CommandHandler('help', start))
 
     # Register the unknown command handler
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
