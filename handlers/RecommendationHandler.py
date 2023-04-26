@@ -38,14 +38,14 @@ class RecommendationHandler:
         if update.message.text == self.UKR_DESC_BUTTON:
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Для типу {self.text} введіть ваш опис",
+                text=f"Для типу '{self.text}' введіть ваш опис",
                 reply_markup=ReplyKeyboardRemove()
             )
             return self.desc_state
         elif update.message.text == self.UKR_CAT_BUTTON:
             await context.bot.send_message(
                 chat_id=update.effective_chat.id,
-                text=f"Для типу {self.text} введіть вашу категорію."
+                text=f"Для типу '{self.text}' введіть вашу категорію."
                      "\nНаприклад: комедія; жахи; фантастика з елемементами драми",
                 reply_markup=ReplyKeyboardRemove()
             )
@@ -59,9 +59,11 @@ class RecommendationHandler:
     async def _get_recommendation(self, update: Update, context: CallbackContext, info_type: str):
         user_msg = update.message.text
         recommendations = await self.get_recommendations(
-            f"Порекомендуй справжні {self.text} за {info_type}: {user_msg}")
+            f"Порекомендуй пронумерованим списком назви існуючих {self.text} за {info_type}: {user_msg}.")
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text=recommendations)
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Введіть команду /help, щоб отримати список команд.")
         return ConversationHandler.END
 
     async def get_recommendation_by_description(self, update: Update, context: CallbackContext):
@@ -76,29 +78,42 @@ class RecommendationHandler:
         response = openai.Completion.create(
             engine="text-davinci-002",
             prompt=prompt,
-            max_tokens=1000,
+            max_tokens=500,
             n=1,
             stop=None,
             temperature=0.5
         )
         # Extract the generated recommendation from the response
-        recommendation = response.choices[0].text.strip()
+        recommendation = response["choices"][0]["text"].strip()
         return recommendation
 
     @staticmethod
     async def cancel(update: Update, context: CallbackContext):
         await context.bot.send_message(chat_id=update.effective_chat.id,
-                                       text="Останню команду відмінено")
+                                       text="Останню команду відмінено",
+                                       reply_markup=ReplyKeyboardRemove())
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Введіть команду /help, щоб отримати список команд.")
+        return ConversationHandler.END
+
+    @staticmethod
+    async def unknown(update, context):
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text="Вибачте, я не розумію цієї команди. Будь ласка, спробуйте щось інше. "
+                                            "Попередні дії відмінені. Введіть команду /help, щоб отримати список команд.",
+                                       reply_markup=ReplyKeyboardRemove())
         return ConversationHandler.END
 
     def handlers_setup(self, app: Application):
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler(self.command, self.recommend)],
-            states={self.main_state: [MessageHandler(filters.TEXT, self.get_recommendations_info)],
-                    self.desc_state: [MessageHandler(filters.TEXT, self.get_recommendation_by_description)],
-                    self.cat_state: [MessageHandler(filters.TEXT, self.get_recommendation_by_category)]
+            states={self.main_state: [MessageHandler(filters.TEXT & (~filters.COMMAND), self.get_recommendations_info)],
+                    self.desc_state: [
+                        MessageHandler(filters.TEXT & (~filters.COMMAND), self.get_recommendation_by_description)],
+                    self.cat_state: [
+                        MessageHandler(filters.TEXT & (~filters.COMMAND), self.get_recommendation_by_category)]
                     },
-            fallbacks=[CommandHandler('cancel', self.cancel)]
+            fallbacks=[CommandHandler('cancel', self.cancel), MessageHandler(filters.COMMAND, self.unknown)]
         )
 
         app.add_handler(conv_handler)
