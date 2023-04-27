@@ -57,6 +57,7 @@ def main() -> None:
 
     # Register the unknown command handler
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
+    app.add_handler(MessageHandler(filters.TEXT, unknown))
 
     # Start the bot
     logging.info("Bot start.")
